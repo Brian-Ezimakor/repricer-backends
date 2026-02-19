@@ -1,0 +1,105 @@
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  subscriptionStatus String   @default("TRIAL")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  stores             Store[]
+}
+
+model Store {
+  id              String   @id @default(uuid())
+  userId          String
+  storeName       String
+  takealotSellerId String
+  apiKey          String
+  isActive        Boolean  @default(true)
+  lastSyncAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+  strategy        StoreStrategy?
+  products        Product[]
+}
+
+model StoreStrategy {
+  id                  String   @id @default(uuid())
+  storeId             String   @unique
+  aggressionLevel     Int      @default(3)
+  minMarginPercent    Float    @default(18)
+  resetHour           Int      @default(6)
+  peakStartHour       Int      @default(9)
+  peakEndHour         Int      @default(21)
+  cooldownMinutes     Int      @default(60)
+  enableAutoReset     Boolean  @default(true)
+  enableAntiPriceWar  Boolean  @default(true)
+  enableSmartAlerts   Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  store               Store    @relation(fields: [storeId], references: [id])
+}
+
+model Product {
+  id                    String   @id @default(uuid())
+  storeId               String
+  sku                   String
+  cost                  Float
+  currentPrice          Float
+  minPrice              Float?
+  maxPrice              Float?
+  targetMarginPercent   Float?
+  manualOverride        Boolean  @default(false)
+  overridePrice         Float?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  lastCompetitorPrice   Int
+  competitorChangeCount Int
+  stableCycleCount      Int
+  isVolatile            Boolean
+
+  store                 Store    @relation(fields: [storeId], references: [id])
+  state                 SkuState?
+  alerts                AlertLog[]
+}
+
+model SkuState {
+  id                    String   @id @default(uuid())
+  productId             String   @unique
+  isBuyBoxWinner        Boolean  @default(false)
+  winCounter            Int      @default(0)
+  lossCounter           Int      @default(0)
+  freezeUntil           DateTime?
+  lastAlertSentAt       DateTime?
+  lastStateChangeAt     DateTime?
+  buyBoxWinRate24h      Float?
+  priceChangeCount24h   Int      @default(0)
+  lowestPrice24h        Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  product               Product  @relation(fields: [productId], references: [id])
+}
+
+model AlertLog {
+  id        String   @id @default(uuid())
+  productId String
+  type      String
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id])
+}
