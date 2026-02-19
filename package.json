@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
+    "build": "npm install && npx prisma generate",
     "start": "node src/server.js",
+    "seed": "node prisma/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
